@@ -12,7 +12,7 @@ fn writefile() {
 
 #[test]
 fn readfile() {
-    let txt=Path::new(".gitignore");
+    let txt=Path::new(".gitignore");  // gitignore file is always there!
     let mut f=txt.open().expect("can't open file!");
     let mut string=String::new();
     f.read_to_string(&mut string).expect("cannot read to string!");
