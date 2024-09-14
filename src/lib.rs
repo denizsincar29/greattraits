@@ -1,4 +1,9 @@
-use std::{fs::{File, remove_dir_all, remove_file, create_dir}, path::Path, io::{self, BufReader, BufWriter}};
+use std::{fs::{create_dir, remove_dir_all, remove_file, File}, io::{self, BufReader, BufWriter}, path::{Path, PathBuf}};
+
+// helper traits for paths:
+trait Paths{}
+impl Paths for Path{}
+impl Paths for PathBuf{}
 
 pub trait Pathjects {
     fn open(&self) -> io::Result<File>;
@@ -7,9 +12,10 @@ pub trait Pathjects {
     fn bufwrite(&self) -> io::Result<BufWriter<File>>;
     fn delete(&self) -> io::Result<()>;
     fn mkdir(&self) -> io::Result<()>;
+    
 }
 
-impl Pathjects for Path {
+impl<T: Paths> Pathjects for T {
     fn open(&self) -> io::Result<File> {
         File::open(self)
     }
