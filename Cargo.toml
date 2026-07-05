@@ -1,10 +1,10 @@
 [package]
 name = "greattraits"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Deniz Sincar <deniz.r1oaz.ru>"]
 edition = "2021"
 description = "My own collection for traits extending standard library types"
-readme = "README.md"
+readme = "readme.md"
 repository = "https://github.com/denizsincar29/greattraits"
 license = "MIT"
 keywords = ["std", "extend", "traits"]
