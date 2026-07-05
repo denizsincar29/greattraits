@@ -1,4 +1,5 @@
 use std::io::{Read, Write};
+use std::path::PathBuf;
 
 use super::*;
 
@@ -30,4 +31,36 @@ fn create_delete_dir(){
     assert!(p.join("hello.txt").exists());
     p.delete().expect("can't delete folder!");
     assert!(!p.exists());
+}
+
+#[test]
+fn pathbuf_works() {
+    let p = PathBuf::from("./testdir_pathbuf");
+    p.mkdir().expect("cannot mkdir!");
+    assert!(p.exists());
+    p.delete().expect("can't delete folder!");
+    assert!(!p.exists());
+}
+
+#[test]
+fn is_blank() {
+    assert!("".is_blank());
+    assert!("   \t\n".is_blank());
+    assert!(!"hi".is_blank());
+    assert!(!String::from("  hi  ").is_blank());
+}
+
+#[test]
+fn truncate_ellipsis() {
+    assert_eq!("hello".truncate_ellipsis(10), "hello");
+    assert_eq!("hello world".truncate_ellipsis(8), "hello...");
+    assert_eq!("hi".truncate_ellipsis(2), "hi");
+}
+
+#[test]
+fn iter_join() {
+    let v = vec![1, 2, 3];
+    assert_eq!(v.into_iter().join(", "), "1, 2, 3");
+    let empty: Vec<i32> = vec![];
+    assert_eq!(empty.into_iter().join(", "), "");
 }

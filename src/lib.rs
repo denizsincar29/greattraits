@@ -1,4 +1,4 @@
-use std::{fs::{create_dir, remove_dir_all, remove_file, File}, io::{self, BufReader, BufWriter}, path::Path};
+use std::{fmt::Display, fs::{create_dir, remove_dir_all, remove_file, File}, io::{self, BufReader, BufWriter}, path::{Path, PathBuf}};
 /// Trait for file operations
 pub trait Pathjects {
     /// Open a file
@@ -40,6 +40,80 @@ impl Pathjects for Path {
     }
 
 }
+
+impl Pathjects for PathBuf {
+    fn open(&self) -> io::Result<File> {
+        self.as_path().open()
+    }
+    fn create(&self) -> io::Result<File> {
+        self.as_path().create()
+    }
+    fn bufread(&self) -> io::Result<BufReader<File>> {
+        self.as_path().bufread()
+    }
+    fn bufwrite(&self) -> io::Result<BufWriter<File>> {
+        self.as_path().bufwrite()
+    }
+    fn delete(&self) -> io::Result<()> {
+        self.as_path().delete()
+    }
+    fn mkdir(&self) -> io::Result<()> {
+        self.as_path().mkdir()
+    }
+}
+
+/// Trait for string manipulation
+pub trait Stringjects {
+    /// True if the string is empty or contains only whitespace
+    fn is_blank(&self) -> bool;
+    /// Truncate to at most `max_len` chars, appending "..." if truncated
+    fn truncate_ellipsis(&self, max_len: usize) -> String;
+}
+
+impl Stringjects for str {
+    fn is_blank(&self) -> bool {
+        self.trim().is_empty()
+    }
+    fn truncate_ellipsis(&self, max_len: usize) -> String {
+        let char_count = self.chars().count();
+        if char_count <= max_len {
+            self.to_string()
+        } else {
+            let truncated: String = self.chars().take(max_len.saturating_sub(3)).collect();
+            format!("{truncated}...")
+        }
+    }
+}
+
+impl Stringjects for String {
+    fn is_blank(&self) -> bool {
+        self.as_str().is_blank()
+    }
+    fn truncate_ellipsis(&self, max_len: usize) -> String {
+        self.as_str().truncate_ellipsis(max_len)
+    }
+}
+
+/// Trait for iterators, adding a dependency-free `join`
+pub trait IterJects: Iterator {
+    /// Join items into a string with a separator, like itertools::join but without the dependency
+    fn join(self, sep: &str) -> String
+    where
+        Self: Sized,
+        Self::Item: Display,
+    {
+        let mut result = String::new();
+        for (i, item) in self.enumerate() {
+            if i > 0 {
+                result.push_str(sep);
+            }
+            result.push_str(&item.to_string());
+        }
+        result
+    }
+}
+
+impl<T: Iterator> IterJects for T {}
 
 
 
