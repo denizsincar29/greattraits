@@ -1,4 +1,20 @@
-use std::{fmt::Display, fs::{create_dir, remove_dir_all, remove_file, File}, io::{self, BufReader, BufWriter}, path::{Path, PathBuf}};
+use std::{fmt::Display, fs::{create_dir, remove_dir_all, remove_file, File}, io::{self, BufReader, BufWriter, Read}, path::{Path, PathBuf}};
+
+/// A single grep match: which line it was found on, the matched text, and its column range within that line
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Line {
+    /// 1-based line number
+    pub line_number: usize,
+    /// The full text of the line the match was found on
+    pub text: String,
+    /// The matched substring
+    pub matched: String,
+    /// Start column (char index, 0-based) of the match within the line
+    pub start: usize,
+    /// End column (char index, 0-based, exclusive) of the match within the line
+    pub end: usize,
+}
+
 /// Trait for file operations
 pub trait Pathjects {
     /// Open a file
@@ -13,6 +29,41 @@ pub trait Pathjects {
     fn delete(&self) -> io::Result<()>;
     /// Create a directory
     fn mkdir(&self) -> io::Result<()>;
+    /// Search a text file for a substring, returning the byte index of the first match
+    fn search(&self, needle: &str) -> io::Result<Option<usize>> {
+        let mut content = String::new();
+        self.open()?.read_to_string(&mut content)?;
+        Ok(content.find(needle))
+    }
+    /// Search a file's raw bytes for a byte sequence, returning the byte index of the first match
+    fn search_bin(&self, needle: &[u8]) -> io::Result<Option<usize>> {
+        let mut content = Vec::new();
+        self.open()?.read_to_end(&mut content)?;
+        if needle.is_empty() {
+            return Ok(Some(0));
+        }
+        Ok(content.windows(needle.len()).position(|w| w == needle))
+    }
+    /// Search a text file line by line for a substring, returning one `Line` per match found
+    fn grep(&self, needle: &str) -> io::Result<Vec<Line>> {
+        let mut content = String::new();
+        self.open()?.read_to_string(&mut content)?;
+        let mut matches = Vec::new();
+        for (line_number, line) in content.lines().enumerate() {
+            for (byte_start, matched) in line.match_indices(needle) {
+                let start = line[..byte_start].chars().count();
+                let end = start + matched.chars().count();
+                matches.push(Line {
+                    line_number: line_number + 1,
+                    text: line.to_string(),
+                    matched: matched.to_string(),
+                    start,
+                    end,
+                });
+            }
+        }
+        Ok(matches)
+    }
 }
 
 impl Pathjects for Path {

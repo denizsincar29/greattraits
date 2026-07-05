@@ -64,3 +64,41 @@ fn iter_join() {
     let empty: Vec<i32> = vec![];
     assert_eq!(empty.into_iter().join(", "), "");
 }
+
+#[test]
+fn search_finds_text() {
+    let txt = Path::new("search_test.txt");
+    let mut f = txt.create().expect("cannot create file");
+    write!(f, "hello world, hello rust").expect("cannot write file");
+    drop(f);
+    assert_eq!(txt.search("world").unwrap(), Some(6));
+    assert_eq!(txt.search("nope").unwrap(), None);
+    txt.delete().expect("can't delete!");
+}
+
+#[test]
+fn search_bin_finds_bytes() {
+    let bin = Path::new("search_bin_test.bin");
+    let mut f = bin.create().expect("cannot create file");
+    f.write_all(&[0x00, 0x01, 0xFF, 0x02, 0x03]).expect("cannot write file");
+    drop(f);
+    assert_eq!(bin.search_bin(&[0xFF, 0x02]).unwrap(), Some(2));
+    assert_eq!(bin.search_bin(&[0x05, 0x06]).unwrap(), None);
+    bin.delete().expect("can't delete!");
+}
+
+#[test]
+fn grep_finds_lines() {
+    let txt = Path::new("grep_test.txt");
+    let mut f = txt.create().expect("cannot create file");
+    write!(f, "first line\nsecond needle line\nthird needle needle line").expect("cannot write file");
+    drop(f);
+    let matches = txt.grep("needle").unwrap();
+    assert_eq!(matches.len(), 3);
+    assert_eq!(matches[0], Line { line_number: 2, text: "second needle line".to_string(), matched: "needle".to_string(), start: 7, end: 13 });
+    assert_eq!(matches[1].line_number, 3);
+    assert_eq!(matches[1].start, 6);
+    assert_eq!(matches[2].line_number, 3);
+    assert_eq!(matches[2].start, 13);
+    txt.delete().expect("can't delete!");
+}

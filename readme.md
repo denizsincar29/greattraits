@@ -6,6 +6,7 @@ A collection of great traits extending rust's standard library.
 ### Pathjects:
 A trait for path manipulation. Implemented for both `Path` and `PathBuf`.
 It supports several methods to open a file, delete a file, create, as well as open in bufread and bufwrite mode.
+It also adds `search(needle)` (find a substring in a text file, returns byte index), `search_bin(needle)` (find a byte sequence in a binary file, returns byte index), and `grep(needle)` (find a substring line by line, returns a `Vec<Line>` with the line number, the full line text, the matched text, and its start/end column).
 
 ### Stringjects:
 A trait for `str` and `String`. Adds `is_blank()` (empty or only whitespace) and `truncate_ellipsis(max_len)` (truncate to at most `max_len` chars, appending "..." if it had to cut).
@@ -48,6 +49,23 @@ fn main() {
     assert_eq!("hello world".truncate_ellipsis(8), "hello...");
     let joined = vec![1, 2, 3].into_iter().join(", ");
     assert_eq!(joined, "1, 2, 3");
+}
+```
+
+Searching files:
+
+```rust
+use greattraits::Pathjects;
+use std::path::Path;
+
+fn main() {
+    let f = Path::new("myfile.txt");
+    if let Some(idx) = f.search("needle").unwrap() {
+        println!("found at byte {idx}");
+    }
+    for line in f.grep("needle").unwrap() {
+        println!("{}:{}-{}: {}", line.line_number, line.start, line.end, line.text);
+    }
 }
 ```
 
