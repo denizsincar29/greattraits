@@ -102,3 +102,94 @@ fn grep_finds_lines() {
     assert_eq!(matches[2].start, 13);
     txt.delete().expect("can't delete!");
 }
+
+#[test]
+fn read_all_and_size() {
+    let txt = Path::new("fileject_read_test.txt");
+    let f = txt.create().expect("cannot create file");
+    f.overwrite_all(b"hello file").expect("cannot write file");
+    assert_eq!(f.read_all_string().unwrap(), "hello file");
+    assert_eq!(f.read_all_bytes().unwrap(), b"hello file");
+    assert_eq!(f.size().unwrap(), 10);
+    assert!(!f.is_empty().unwrap());
+    txt.delete().expect("can't delete!");
+}
+
+#[test]
+fn is_empty_works() {
+    let txt = Path::new("fileject_empty_test.txt");
+    let f = txt.create().expect("cannot create file");
+    assert!(f.is_empty().unwrap());
+    txt.delete().expect("can't delete!");
+}
+
+#[test]
+fn append_and_overwrite() {
+    let txt = Path::new("fileject_append_test.txt");
+    let f = txt.create().expect("cannot create file");
+    f.append_str("hello ").unwrap();
+    f.append_str("world").unwrap();
+    assert_eq!(f.read_all_string().unwrap(), "hello world");
+    f.overwrite_all(b"replaced").unwrap();
+    assert_eq!(f.read_all_string().unwrap(), "replaced");
+    txt.delete().expect("can't delete!");
+}
+
+#[test]
+fn copy_to_another_file() {
+    let src = Path::new("fileject_copy_src.txt");
+    let dst = Path::new("fileject_copy_dst.txt");
+    let f_src = src.create().expect("cannot create file");
+    f_src.overwrite_all(b"copy me").unwrap();
+    let mut f_dst = dst.create().expect("cannot create file");
+    f_src.copy_to(&mut f_dst).unwrap();
+    assert_eq!(dst.open().unwrap().read_all_string().unwrap(), "copy me");
+    src.delete().expect("can't delete!");
+    dst.delete().expect("can't delete!");
+}
+
+#[test]
+fn line_and_word_count() {
+    let txt = Path::new("fileject_count_test.txt");
+    let f = txt.create().expect("cannot create file");
+    f.overwrite_all(b"one two\nthree\nfour five six").unwrap();
+    assert_eq!(f.line_count().unwrap(), 3);
+    assert_eq!(f.word_count().unwrap(), 6);
+    txt.delete().expect("can't delete!");
+}
+
+#[test]
+fn checksum_is_stable_and_content_sensitive() {
+    let txt = Path::new("fileject_checksum_test.txt");
+    let f = txt.create().expect("cannot create file");
+    f.overwrite_all(b"same content").unwrap();
+    let sum1 = f.checksum().unwrap();
+    let sum2 = f.checksum().unwrap();
+    assert_eq!(sum1, sum2);
+    f.overwrite_all(b"different content").unwrap();
+    let sum3 = f.checksum().unwrap();
+    assert_ne!(sum1, sum3);
+    txt.delete().expect("can't delete!");
+}
+
+#[test]
+fn append_insert_remove_line() {
+    let txt = Path::new("fileject_lines_test.txt");
+    let f = txt.create().expect("cannot create file");
+    f.append_line("first").unwrap();
+    f.append_line("second").unwrap();
+    f.append_line("fourth").unwrap();
+    assert_eq!(f.read_all_string().unwrap(), "first\nsecond\nfourth\n");
+
+    f.insert_line(2, "third").unwrap();
+    assert_eq!(f.read_all_string().unwrap(), "first\nsecond\nthird\nfourth\n");
+
+    let removed = f.remove_line(1).unwrap();
+    assert_eq!(removed, Some("second".to_string()));
+    assert_eq!(f.read_all_string().unwrap(), "first\nthird\nfourth\n");
+
+    let missing = f.remove_line(99).unwrap();
+    assert_eq!(missing, None);
+
+    txt.delete().expect("can't delete!");
+}
